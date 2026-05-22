@@ -79,7 +79,7 @@ freq_data <- full_grid %>%
   mutate(count = replace_na(count, 0)) %>%
   arrange(Group, modal_value)
 
-# "Cumulative sum for stacked bars (for mean point)
+# Cumulative sum for stacked bars (for mean point)
 freq_data <- freq_data %>%
   group_by(Group) %>%
   mutate(cum_count = cumsum(count) - count/2)
@@ -111,12 +111,12 @@ mean_labels <- group_means %>%
   mutate(label = paste0("Mean = ", round(mean_value,1)))
 ggplot(freq_data_percent, aes(x = Group, y = percent, fill = factor(modal_value))) +
   geom_bar(stat = "identity") +  # stacked bars
-  # Mittelwert-Text unter den Balken
+  # Mean text below the bars"
   geom_text(data = mean_labels,
             aes(x = Group, y = -2, label = label),
             inherit.aes = FALSE,
             vjust = 1,
-            size = 5,       # Labelgröße erhöhen
+            size = 5,       # increase label size
             fontface = "bold") +
   scale_x_discrete(labels = label_vector) +
   scale_y_continuous(limits = c(-5, 100), expand = c(0,0), labels = function(x) paste0(x, "%")) +
@@ -129,10 +129,8 @@ ggplot(freq_data_percent, aes(x = Group, y = percent, fill = factor(modal_value)
   theme_minimal() +
   theme(
     legend.position = "right",
-    panel.grid = element_blank(),  # Grid entfernen
-    axis.text = element_text(size = 12),   # Achsenlabels größer
+    panel.grid = element_blank(),  # remove Grid 
+    axis.text = element_text(size = 12),   # bigger axis labels 
     axis.title = element_text(size = 14, face = "bold"),
     plot.title = element_text(size = 16, face = "bold", hjust = 0.5)
   )
-
-
