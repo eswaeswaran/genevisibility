@@ -1,0 +1,108 @@
+
+R version 4.4.2 (2024-10-31) -- "Pile of Leaves"
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin20
+
+R ist freie Software und kommt OHNE JEGLICHE GARANTIE.
+Sie sind eingeladen, es unter bestimmten Bedingungen weiter zu verbreiten.
+Tippen Sie 'license()' or 'licence()' für Details dazu.
+
+R ist ein Gemeinschaftsprojekt mit vielen Beitragenden.
+Tippen Sie 'contributors()' für mehr Information und 'citation()',
+um zu erfahren, wie R oder R packages in Publikationen zitiert werden können.
+
+Tippen Sie 'demo()' für einige Demos, 'help()' für on-line Hilfe, oder
+'help.start()' für eine HTML Browserschnittstelle zur Hilfe.
+Tippen Sie 'q()', um R zu verlassen.
+
+> #!/usr/bin/env Rscript
+> 
+> suppressPackageStartupMessages({
++   library(biomaRt)
++   library(dplyr)
++   library(readr)
++   library(stringr)
++   library(httr)
++   library(jsonlite)
++   library(purrr)
++   library(tibble)
++ })
+Warnmeldung:
+Paket ‘readr’ wurde unter R Version 4.4.3 erstellt 
+> 
+> IN_FILE <- "top500.txt"
+> OUT_FILE <- "human_vs_macaque_dnds.tsv"
+> 
+> TARGET_SPECIES_REST <- "macaca_mulatta"   # REST API species name
+> SPECIES_PREFIX_MART <- "mmulatta"         # BioMart prefix
+> ORTHOLOGY_KEEP <- c("ortholog_one2one")
+> 
+> read_gene_list <- function(path) {
++   x <- read_lines(path)
++   x <- x[!str_detect(x, "^\\s*$")]
++   x <- x[!str_detect(x, "^#")]
++   if (length(x) == 0) stop("No genes read from input file.")
++   x
++ }
+> 
+> is_ensembl_gene_id <- function(x) str_detect(x, "^ENSG\\d+")
+> 
+> message("Connecting to Ensembl BioMart...")
+Connecting to Ensembl BioMart...
+> human <- useEnsembl(biomart = "genes", dataset = "hsapiens_gene_ensembl", mirror = "useast")
+> 
+> attrs <- listAttributes(human)
+> 
+> find_attr <- function(pattern) {
++   hit <- attrs$name[str_detect(attrs$name, pattern)]
++   if (length(hit) == 0) return(NA_character_)
++   hit[[1]]
++ }
+> 
+> # We ONLY require attributes that BioMart still provides
+> attr_orth_type   <- find_attr(paste0("^", SPECIES_PREFIX_MART, "_homolog_orthology_type$"))
+> attr_target_gene <- find_attr(paste0("^", SPECIES_PREFIX_MART, "_homolog_ensembl_gene$"))
+> 
+> needed_mart <- c("ensembl_gene_id", "hgnc_symbol", attr_target_gene, attr_orth_type)
+> if (any(is.na(needed_mart))) {
++   message("Could not find required macaque orthology attributes in this Ensembl mart.")
++   message("Missing: ", paste(needed_mart[is.na(needed_mart)], collapse=", "))
++   message("Try searching listAttributes(human)$name for 'mmulatta_homolog_'")
++   stop("BioMart attribute discovery failed.")
++ }
+> 
+> genes <- read_gene_list(IN_FILE)
+> 
+> # Step 1: map input -> ensembl_gene_id (if needed)
+> if (all(is_ensembl_gene_id(genes))) {
++   map_df <- tibble(input = genes, ensembl_gene_id = genes)
++ } else {
++   message("Mapping HGNC symbols -> Ensembl gene IDs...")
++   map_df0 <- getBM(
++     attributes = c("hgnc_symbol", "ensembl_gene_id"),
++     filters    = "hgnc_symbol",
++     values     = unique(genes),
++     mart       = human
++   ) %>% as_tibble() %>% rename(input = hgnc_symbol)
++ 
++   map_df <- tibble(input = genes) %>%
++     left_join(map_df0, by = "input")
++ }
+Mapping HGNC symbols -> Ensembl gene IDs...
+> 
+> message("Mapped ", sum(!is.na(map_df$ensembl_gene_id)), " / ", nrow(map_df), " inputs to Ensembl IDs.")
+Mapped 601 / 602 inputs to Ensembl IDs.
+> 
+> # Step 2: query orthology IDs via BioMart (no dn/ds here)
+> message("Querying macaque orthology (gene IDs + orthology type) via BioMart...")
+Querying macaque orthology (gene IDs + orthology type) via BioMart...
+> res_mart <- getBM(
++   attributes = needed_mart,
++   filters    = "ensembl_gene_id",
++   values     = unique(na.omit(map_df$ensembl_gene_id)),
++   mart       = human
++ ) %>% as_tibble()
+Fehler in .processResults(postRes, mart = mart, hostURLsep = sep, fullXmlQuery = fullXmlQuery,  : 
+  Query ERROR: caught BioMart::Exception::Usage: Attributes from multiple attribute pages are not allowed
+Ruft auf: %>% -> as_tibble -> getBM -> .processResults
+Ausführung angehalten
