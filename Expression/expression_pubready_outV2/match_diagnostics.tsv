@@ -1,0 +1,5 @@
+group	list_size	matched_in_expression
+top500	500	491
+lowest500	500	470
+randomAbove10k	500	475
+randomBelow10k	500	450

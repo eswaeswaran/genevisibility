@@ -1,0 +1,5 @@
+group	n_before	n_after	n_removed	min_max_nTPM_threshold
+top500	491	487	4	1.0
+lowest500	470	468	2	1.0
+randomAbove10k	475	473	2	1.0
+randomBelow10k	450	436	14	1.0

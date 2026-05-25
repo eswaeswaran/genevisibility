@@ -1,0 +1,4 @@
+metric	test	p
+mean_expr	Kruskal-Wallis	1.1470650894627747e-50
+max_expr	Kruskal-Wallis	3.435033203437572e-37
+tau	Kruskal-Wallis	7.447908379085963e-10

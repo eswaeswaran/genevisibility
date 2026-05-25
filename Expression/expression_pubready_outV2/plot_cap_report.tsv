@@ -1,0 +1,4 @@
+metric	plot_cap_percentile	plot_cap_value	note
+mean_expr	99.0	897.8767450980373	Cap applied to y-limit for display only; statistics computed on full filtered data.
+max_expr	99.0	9856.765999999952	Cap applied to y-limit for display only; statistics computed on full filtered data.
+tau			
